@@ -36,7 +36,7 @@ cd changelog
 ### 4. Configure Environment
 ```bash
 # Copy example environment file
-cp .env.example .env
+cp env.example .env
 
 # Generate secret key
 openssl rand -hex 32
