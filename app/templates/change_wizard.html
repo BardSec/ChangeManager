@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}New Change - ChangeLog{% endblock %}
+
+{% block content %}
+<div class="wizard-container">
+    <h1>Create New Change Record</h1>
+    
+    <!-- Progress Steps -->
+    <div class="wizard-progress">
+        <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label">Basics</div>
+        </div>
+        <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label">Risk</div>
+        </div>
+        <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label">Work Details</div>
+        </div>
+        <div class="step" data-step="4">
+            <div class="step-number">4</div>
+            <div class="step-label">Completion</div>
+        </div>
+    </div>
+
+    <form id="wizardForm" method="post" action="/changes">
+        <!-- Step 1: Basics -->
+        <div class="wizard-step active" id="step-1">
+            <h2>Step 1: Basics</h2>
+            
+            <div class="form-group">
+                <label for="title">Title: <span class="required">*</span></label>
+                <input type="text" id="title" name="title" required maxlength="500"
+                       placeholder="Brief description of the change">
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category: <span class="required">*</span></label>
+                <select id="category" name="category" required>
+                    <option value="">Select category...</option>
+                    <option value="Network">Network</option>
+                    <option value="Identity">Identity</option>
+                    <option value="Endpoint">Endpoint</option>
+                    <option value="Application">Application</option>
+                    <option value="Vendor">Vendor</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="systems-input">Systems Affected: <span class="required">*</span></label>
+                <div class="tag-input-container">
+                    <div id="systems-tags"></div>
+                    <input type="text" id="systems-input" 
+                           placeholder="Type system name and press Enter">
+                </div>
+                <p class="help-text">Add tags for affected systems (e.g., "ActiveDirectory", "WiFi", "Canvas")</p>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="planned_start">Planned Start:</label>
+                    <input type="datetime-local" id="planned_start" name="planned_start">
+                </div>
+                
+                <div class="form-group">
+                    <label for="planned_end">Planned End:</label>
+                    <input type="datetime-local" id="planned_end" name="planned_end">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="implementer">Implementer: <span class="required">*</span></label>
+                <input type="text" id="implementer" name="implementer" required
+                       value="{{ default_implementer }}">
+            </div>
+            
+            <div class="form-actions">
+                <a href="/" class="btn btn-secondary">Cancel</a>
+                <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Risk Assessment -->
+        <div class="wizard-step" id="step-2">
+            <h2>Step 2: Risk Assessment</h2>
+            
+            <div class="form-group">
+                <label for="impact_level">Impact Level: <span class="required">*</span></label>
+                <select id="impact_level" name="impact_level" required onchange="checkBackoutRequired()">
+                    <option value="">Select impact level...</option>
+                    <option value="Low">Low - Minimal impact, single system</option>
+                    <option value="Medium">Medium - Multiple systems or noticeable impact</option>
+                    <option value="High">High - Critical systems or widespread impact</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="user_impact">Expected User Impact: <span class="required">*</span></label>
+                <select id="user_impact" name="user_impact" required>
+                    <option value="">Select user impact...</option>
+                    <option value="None">None - No user-facing impact</option>
+                    <option value="Some">Some - Limited users affected</option>
+                    <option value="Many">Many - Significant user base affected</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="maintenance_window">Maintenance Window Used:</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="maintenance_window" value="true" required>
+                        Yes - Performed during scheduled maintenance
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="maintenance_window" value="false" required>
+                        No - Performed during business hours or unscheduled
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group" id="backout-group">
+                <label for="backout_plan">Backout Plan: <span class="required" id="backout-required">*</span></label>
+                <textarea id="backout_plan" name="backout_plan" rows="4"
+                          placeholder="Describe how to revert this change if issues occur..."></textarea>
+                <p class="help-text">Required for Medium and High impact changes</p>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
+                <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Work Details -->
+        <div class="wizard-step" id="step-3">
+            <h2>Step 3: Work Details</h2>
+            
+            <div class="form-group">
+                <label for="what_changed">What Changed: <span class="required">*</span></label>
+                <textarea id="what_changed" name="what_changed" rows="6" required
+                          placeholder="Describe the technical details of what was changed..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket_id">Related Ticket/Issue ID:</label>
+                <input type="text" id="ticket_id" name="ticket_id" maxlength="100"
+                       placeholder="e.g., INC123456, TASK-789">
+            </div>
+            
+            <div class="form-group">
+                <label for="links-input">Related Links:</label>
+                <div class="tag-input-container">
+                    <div id="links-tags"></div>
+                    <input type="url" id="links-input" 
+                           placeholder="Paste URL and press Enter">
+                </div>
+                <p class="help-text">Add URLs to documentation, tickets, or related resources</p>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                <button type="button" class="btn btn-primary" onclick="nextStep(4)">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Completion -->
+        <div class="wizard-step" id="step-4">
+            <h2>Step 4: Completion</h2>
+            
+            <div class="form-group">
+                <label for="status">Status: <span class="required">*</span></label>
+                <select id="status" name="status" required>
+                    <option value="Planned">Planned - Change is scheduled</option>
+                    <option value="In Progress">In Progress - Currently implementing</option>
+                    <option value="Completed">Completed - Successfully finished</option>
+                    <option value="Rolled Back">Rolled Back - Reverted due to issues</option>
+                    <option value="Failed">Failed - Could not complete</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="outcome_notes">Outcome Notes:</label>
+                <textarea id="outcome_notes" name="outcome_notes" rows="4"
+                          placeholder="Summary of results, lessons learned, etc..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="post_change_issues">Post-Change Issues Observed:</label>
+                <textarea id="post_change_issues" name="post_change_issues" rows="4"
+                          placeholder="Any problems encountered after implementation..."></textarea>
+            </div>
+
+            <div id="secret-warning" class="alert alert-warning" style="display: none;">
+                <strong>⚠️ Potential Secrets Detected</strong>
+                <p id="secret-details"></p>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="confirm_no_secrets" name="confirm_no_secrets" value="true">
+                    I confirm this change record does not contain sensitive credentials, keys, or secrets
+                </label>
+            </div>
+            
+            {% if email_enabled %}
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="email_copy" name="email_copy" value="true">
+                    Email me a summary of this change record
+                </label>
+            </div>
+            {% endif %}
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Create Change Record</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/wizard.js"></script>
+{% endblock %}

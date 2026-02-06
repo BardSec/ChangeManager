@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ChangeLog{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if user %}
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/">ChangeLog</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/changes/new" class="nav-link">New Change</a>
+                {% if user.role == 'admin' %}
+                <a href="#" class="nav-link" onclick="showExportModal(); return false;">Export CSV</a>
+                {% endif %}
+                <div class="nav-user">
+                    <span class="user-name">{{ user.name or user.email }}</span>
+                    <span class="user-role">({{ user.role }})</span>
+                    <a href="/auth/logout" class="nav-link">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if user and user.role == 'admin' %}
+    <!-- CSV Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Changes to CSV</h2>
+                <span class="close" onclick="closeExportModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm" onsubmit="exportCsv(event)">
+                    <div class="form-group">
+                        <label for="export_start">Start Date:</label>
+                        <input type="date" id="export_start" name="start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="export_end">End Date:</label>
+                        <input type="date" id="export_end" name="end" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Export</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        function showExportModal() {
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+
+        function exportCsv(event) {
+            event.preventDefault();
+            const form = event.target;
+            const start = form.start.value;
+            const end = form.end.value;
+            
+            window.location.href = `/reports/changes.csv?start=${start}&end=${end}`;
+            closeExportModal();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('exportModal');
+            if (event.target == modal) {
+                closeExportModal();
+            }
+        }
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

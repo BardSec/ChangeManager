@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ChangeLog{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="page-header">
+        <h1>Change Records</h1>
+        <a href="/changes/new" class="btn btn-primary">Create New Change</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-panel">
+        <form method="get" action="/" class="filters-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" 
+                           value="{{ filters.search or '' }}" 
+                           placeholder="Title, ticket ID, or description...">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="category">Category:</label>
+                    <select id="category" name="category">
+                        <option value="">All</option>
+                        <option value="Network" {% if filters.category == "Network" %}selected{% endif %}>Network</option>
+                        <option value="Identity" {% if filters.category == "Identity" %}selected{% endif %}>Identity</option>
+                        <option value="Endpoint" {% if filters.category == "Endpoint" %}selected{% endif %}>Endpoint</option>
+                        <option value="Application" {% if filters.category == "Application" %}selected{% endif %}>Application</option>
+                        <option value="Vendor" {% if filters.category == "Vendor" %}selected{% endif %}>Vendor</option>
+                        <option value="Other" {% if filters.category == "Other" %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="impact_level">Impact:</label>
+                    <select id="impact_level" name="impact_level">
+                        <option value="">All</option>
+                        <option value="Low" {% if filters.impact_level == "Low" %}selected{% endif %}>Low</option>
+                        <option value="Medium" {% if filters.impact_level == "Medium" %}selected{% endif %}>Medium</option>
+                        <option value="High" {% if filters.impact_level == "High" %}selected{% endif %}>High</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="status">Status:</label>
+                    <select id="status" name="status">
+                        <option value="">All</option>
+                        <option value="Planned" {% if filters.status == "Planned" %}selected{% endif %}>Planned</option>
+                        <option value="In Progress" {% if filters.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                        <option value="Completed" {% if filters.status == "Completed" %}selected{% endif %}>Completed</option>
+                        <option value="Rolled Back" {% if filters.status == "Rolled Back" %}selected{% endif %}>Rolled Back</option>
+                        <option value="Failed" {% if filters.status == "Failed" %}selected{% endif %}>Failed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="start_date">From Date:</label>
+                    <input type="date" id="start_date" name="start_date" 
+                           value="{{ filters.start_date or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="end_date">To Date:</label>
+                    <input type="date" id="end_date" name="end_date" 
+                           value="{{ filters.end_date or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="implementer">Implementer:</label>
+                    <input type="text" id="implementer" name="implementer" 
+                           value="{{ filters.implementer or '' }}" 
+                           placeholder="Email or name...">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="system">System:</label>
+                    <input type="text" id="system" name="system" 
+                           value="{{ filters.system or '' }}" 
+                           placeholder="System tag...">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="/" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="results-summary">
+        <p>Showing {{ changes|length }} of {{ total }} changes</p>
+    </div>
+
+    <!-- Changes Table -->
+    <div class="table-container">
+        <table class="changes-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Impact</th>
+                    <th>Status</th>
+                    <th>Implementer</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if changes %}
+                    {% for change in changes %}
+                    <tr>
+                        <td>{{ change.id }}</td>
+                        <td>{{ change.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="/changes/{{ change.id }}" class="change-title">
+                                {{ change.title }}
+                            </a>
+                            {% if change.systems_list %}
+                            <div class="systems-tags">
+                                {% for system in change.systems_list[:3] %}
+                                <span class="tag">{{ system }}</span>
+                                {% endfor %}
+                                {% if change.systems_list|length > 3 %}
+                                <span class="tag">+{{ change.systems_list|length - 3 }} more</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge badge-category">{{ change.category.value }}</span></td>
+                        <td><span class="badge badge-impact-{{ change.impact_level.value.lower() }}">{{ change.impact_level.value }}</span></td>
+                        <td><span class="badge badge-status-{{ change.status.value.lower().replace(' ', '-') }}">{{ change.status.value }}</span></td>
+                        <td>{{ change.implementer }}</td>
+                        <td>
+                            <a href="/changes/{{ change.id }}" class="btn-icon" title="View">👁️</a>
+                            <a href="/changes/{{ change.id }}/pdf" class="btn-icon" title="Download PDF">📄</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="no-results">No changes found. Try adjusting your filters or <a href="/changes/new">create a new change</a>.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}{% for key, value in filters.items() %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-secondary">Previous</a>
+        {% endif %}
+        
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}{% for key, value in filters.items() %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import Optional
+from app.config import get_settings
+import json
+
+settings = get_settings()
+
+
+class EmailService:
+    """Email service for sending change notifications (pluggable module)."""
+    
+    @staticmethod
+    def is_enabled() -> bool:
+        """Check if email service is enabled."""
+        return settings.enable_email and bool(settings.smtp_host)
+    
+    @staticmethod
+    def send_change_summary(
+        recipient_email: str,
+        change: dict,
+        change_url: str
+    ) -> bool:
+        """
+        Send change summary email.
+        
+        Args:
+            recipient_email: Recipient email address
+            change: Change record dictionary
+            change_url: URL to view the change
+            
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        if not EmailService.is_enabled():
+            return False
+        
+        try:
+            # Create message
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = f"Change Record: {change['title']}"
+            msg['From'] = settings.smtp_from
+            msg['To'] = recipient_email
+            
+            # Create plain text version
+            text_content = EmailService._create_text_summary(change, change_url)
+            
+            # Create HTML version
+            html_content = EmailService._create_html_summary(change, change_url)
+            
+            # Attach both versions
+            part1 = MIMEText(text_content, 'plain')
+            part2 = MIMEText(html_content, 'html')
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            # Send email
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+                if settings.smtp_user and settings.smtp_password:
+                    server.starttls()
+                    server.login(settings.smtp_user, settings.smtp_password)
+                server.send_message(msg)
+            
+            return True
+            
+        except Exception as e:
+            # Log error but don't fail the change creation
+            print(f"Email send failed: {e}")
+            return False
+    
+    @staticmethod
+    def _create_text_summary(change: dict, change_url: str) -> str:
+        """Create plain text email summary."""
+        systems = ', '.join(json.loads(change['systems_affected']))
+        
+        text = f"""
+IT Change Record Summary
+
+Change ID: {change['id']}
+Title: {change['title']}
+Status: {change['status']}
+
+Category: {change['category']}
+Systems Affected: {systems}
+Impact Level: {change['impact_level']}
+Implementer: {change['implementer']}
+
+View full details: {change_url}
+
+---
+This is an automated notification. Sensitive details are not included in this email.
+Please use the link above to view the complete change record.
+"""
+        return text.strip()
+    
+    @staticmethod
+    def _create_html_summary(change: dict, change_url: str) -> str:
+        """Create HTML email summary."""
+        systems = ', '.join(json.loads(change['systems_affected']))
+        
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #0078d4; color: white; padding: 20px; text-align: center; }}
+        .content {{ background-color: #f9f9f9; padding: 20px; margin-top: 20px; }}
+        .field {{ margin-bottom: 15px; }}
+        .label {{ font-weight: bold; color: #555; }}
+        .value {{ margin-left: 10px; }}
+        .button {{ display: inline-block; padding: 12px 24px; background-color: #0078d4; 
+                   color: white; text-decoration: none; border-radius: 4px; margin-top: 20px; }}
+        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; 
+                   font-size: 12px; color: #666; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>IT Change Record Summary</h1>
+        </div>
+        
+        <div class="content">
+            <div class="field">
+                <span class="label">Change ID:</span>
+                <span class="value">{change['id']}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Title:</span>
+                <span class="value">{change['title']}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Status:</span>
+                <span class="value">{change['status']}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Category:</span>
+                <span class="value">{change['category']}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Systems Affected:</span>
+                <span class="value">{systems}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Impact Level:</span>
+                <span class="value">{change['impact_level']}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Implementer:</span>
+                <span class="value">{change['implementer']}</span>
+            </div>
+            
+            <a href="{change_url}" class="button">View Full Details</a>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification. Sensitive details are not included in this email.</p>
+            <p>Please use the link above to view the complete change record.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+        return html.strip()
