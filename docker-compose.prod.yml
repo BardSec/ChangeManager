@@ -1,0 +1,61 @@
+version: '3.8'
+
+# Production Docker Compose configuration
+# Use this for production deployments with proper security settings
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-changelog}
+      POSTGRES_USER: ${POSTGRES_USER:-changelog_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Must be set in .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-changelog_user} -d ${POSTGRES_DB:-changelog}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - changelog_network
+
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-changelog_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-changelog}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID}
+      - ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET}
+      - ENTRA_TENANT_ID=${ENTRA_TENANT_ID}
+      - REDIRECT_URI=${REDIRECT_URI}
+      - ENABLE_EMAIL=${ENABLE_EMAIL:-false}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+    volumes:
+      - ./roles.yaml:/app/roles.yaml:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+      "
+    networks:
+      - changelog_network
+    ports:
+      - "127.0.0.1:8000:8000"  # Only expose to localhost; use reverse proxy
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  changelog_network:
+    driver: bridge
