@@ -136,7 +136,7 @@ async def export_changes_csv(
     
     # Prepare response
     output.seek(0)
-    filename = f"changelog_export_{start}_to_{end}.csv"
+    filename = f"changekeeper_export_{start}_to_{end}.csv"
     
     return StreamingResponse(
         iter([output.getvalue()]),

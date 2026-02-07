@@ -1,4 +1,4 @@
-# ChangeLog MVP - Project Summary
+# ChangeKeeper MVP - Project Summary
 
 ## ✅ Deliverables Completed
 
@@ -34,7 +34,7 @@
 ## 📁 Project Structure
 
 ```
-changelog/
+changekeeper/
 ├── app/
 │   ├── auth/               # Authentication & authorization
 │   ├── routers/            # API endpoints & page routes
@@ -80,10 +80,10 @@ docker-compose up --build
 
 ```bash
 # 1. Copy files to server
-scp -r changelog user@server:/opt/
+scp -r changekeeper user@server:/opt/
 
 # 2. Configure environment
-cd /opt/changelog
+cd /opt/changekeeper
 cp .env.example .env
 # Edit .env for production
 
@@ -92,7 +92,7 @@ cp .env.example .env
 # 4. Start application
 docker-compose -f docker-compose.prod.yml up -d
 
-# 5. Access at https://changelog.yourdomain.com
+# 5. Access at https://changekeeper.yourdomain.com
 ```
 
 ## 🔑 Key Features Implemented

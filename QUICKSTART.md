@@ -1,4 +1,4 @@
-# ChangeLog - Quick Start Guide
+# ChangeKeeper - Quick Start Guide
 
 ## 5-Minute Setup
 
@@ -14,7 +14,7 @@ docker-compose --version
 ### 2. Get the Code
 ```bash
 git clone <your-repo-url>
-cd changelog
+cd changekeeper
 ```
 
 ### 3. Configure Microsoft Entra ID
@@ -23,7 +23,7 @@ cd changelog
 
 1. Go to https://portal.azure.com → Azure Active Directory → App registrations
 2. Click "New registration"
-   - Name: `ChangeLog`
+   - Name: `ChangeKeeper`
    - Redirect URI: `Web` → `http://localhost:8000/auth/callback`
 3. After creation, note these values:
    - Application (client) ID
@@ -118,7 +118,7 @@ docker-compose down
 docker-compose restart app
 
 # Backup database
-docker-compose exec db pg_dump -U changelog_user changelog > backup.sql
+docker-compose exec db pg_dump -U changekeeper_user changekeeper > backup.sql
 
 # Reset everything (⚠️ destroys data)
 docker-compose down -v
