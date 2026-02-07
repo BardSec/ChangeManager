@@ -1,4 +1,4 @@
-# Changelog
+# Changekeeper
 
 ## Version 2.0.0 - Production Ready (2026-02-04)
 
@@ -50,8 +50,8 @@
 
 ```bash
 # Extract and deploy
-unzip changelog-v2.zip
-cd changelog-v2
+unzip changekeeper-v2.zip
+cd changekeeper-v2
 cp .env.example .env
 # Edit .env with your Azure AD credentials
 docker-compose up -d

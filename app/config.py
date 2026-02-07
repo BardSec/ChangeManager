@@ -28,11 +28,11 @@ class Settings(BaseSettings):
     smtp_from: str = ""
     
     # Session
-    session_cookie_name: str = "changelog_session"
+    session_cookie_name: str = "changekeeper_session"
     session_max_age: int = 86400  # 24 hours
     
     # Application
-    app_name: str = "ChangeLog"
+    app_name: str = "ChangeKeeper"
     
     class Config:
         env_file = ".env"

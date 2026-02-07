@@ -7,24 +7,24 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-changelog}
-      POSTGRES_USER: ${POSTGRES_USER:-changelog_user}
+      POSTGRES_DB: ${POSTGRES_DB:-changekeeper}
+      POSTGRES_USER: ${POSTGRES_USER:-changekeeper_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Must be set in .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-changelog_user} -d ${POSTGRES_DB:-changelog}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-changekeeper_user} -d ${POSTGRES_DB:-changekeeper}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - changelog_network
+      - changekeeper_network
 
   app:
     build: .
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-changelog_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-changelog}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-changekeeper_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-changekeeper}
       - SECRET_KEY=${SECRET_KEY}
       - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID}
       - ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET}
@@ -48,7 +48,7 @@ services:
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
       "
     networks:
-      - changelog_network
+      - changekeeper_network
     ports:
       - "127.0.0.1:8000:8000"  # Only expose to localhost; use reverse proxy
 
@@ -57,5 +57,5 @@ volumes:
     driver: local
 
 networks:
-  changelog_network:
+  changekeeper_network:
     driver: bridge

@@ -124,7 +124,7 @@ change = Change(
 2. `app/main.py` - Middleware configuration
 3. `app/routers/changes.py` - Form handling and validation
 4. `README.md` - Complete rewrite with fixes documented
-5. `CHANGELOG.md` - Version history
+5. `CHANGEKEEPER.md` - Version history
 
 ## Upgrade Path from V1
 
@@ -132,12 +132,12 @@ change = Change(
 
 1. Backup V1 database:
    ```bash
-   docker-compose exec db pg_dump -U changelog_user changelog > v1_backup.sql
+   docker-compose exec db pg_dump -U changekeeper_user changekeeper > v1_backup.sql
    ```
 
 2. Deploy V2:
    ```bash
-   cd changelog-v2
+   cd changekeeper-v2
    cp .env.example .env
    # Configure .env
    docker-compose up -d
@@ -145,7 +145,7 @@ change = Change(
 
 3. (Optional) Migrate data:
    ```bash
-   docker-compose exec -T db psql -U changelog_user changelog < v1_backup.sql
+   docker-compose exec -T db psql -U changekeeper_user changekeeper < v1_backup.sql
    ```
 
 ## Known Working Configurations

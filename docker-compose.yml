@@ -4,15 +4,15 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: changelog
-      POSTGRES_USER: changelog_user
-      POSTGRES_PASSWORD: changelog_password
+      POSTGRES_DB: changekeeper
+      POSTGRES_USER: changekeeper_user
+      POSTGRES_PASSWORD: changekeeper_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U changelog_user -d changelog"]
+      test: ["CMD-SHELL", "pg_isready -U changekeeper_user -d changekeeper"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://changelog_user:changelog_password@db:5432/changelog
+      - DATABASE_URL=postgresql://changekeeper_user:changekeeper_password@db:5432/changekeeper
       - SECRET_KEY=${SECRET_KEY}
       - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID}
       - ENTRA_CLIENT_SECRET=${ENTRA_CLIENT_SECRET}

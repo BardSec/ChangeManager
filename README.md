@@ -1,4 +1,4 @@
-# ChangeLog - IT Change Management System
+# ChangeKeeper - IT Change Management System
 
 A lightweight, secure web application for K–12 IT teams to record, track, and report on operational changes. Built with FastAPI and designed for easy deployment using Docker Compose.
 
@@ -35,7 +35,7 @@ A lightweight, secure web application for K–12 IT teams to record, track, and 
 
 ```bash
 git clone <repository-url>
-cd changelog
+cd changekeeper
 cp .env.example .env
 ```
 
@@ -45,7 +45,7 @@ cp .env.example .env
 
 1. Go to [Azure Portal](https://portal.azure.com) → Azure Active Directory → App registrations
 2. Click "New registration"
-3. Name: `ChangeLog`
+3. Name: `ChangeKeeper`
 4. Supported account types: `Accounts in this organizational directory only`
 5. Redirect URI: `Web` → `http://localhost:8000/auth/callback`
 6. Click "Register"
@@ -55,7 +55,7 @@ cp .env.example .env
 1. Copy **Application (client) ID** → This is your `ENTRA_CLIENT_ID`
 2. Copy **Directory (tenant) ID** → This is your `ENTRA_TENANT_ID`
 3. Go to "Certificates & secrets" → "New client secret"
-4. Description: `ChangeLog Secret`
+4. Description: `ChangeKeeper Secret`
 5. Expires: Choose expiration (12-24 months recommended)
 6. Copy the **Value** → This is your `ENTRA_CLIENT_SECRET` (save it now, you can't see it again!)
 
@@ -94,7 +94,7 @@ ENTRA_TENANT_ID=<your-tenant-id>
 REDIRECT_URI=http://localhost:8000/auth/callback
 
 # Database (already configured for Docker Compose)
-DATABASE_URL=postgresql://changelog_user:changelog_password@db:5432/changelog
+DATABASE_URL=postgresql://changekeeper_user:changekeeper_password@db:5432/changekeeper
 
 # Email (Optional - leave disabled for MVP)
 ENABLE_EMAIL=false
@@ -168,8 +168,8 @@ sudo sh get-docker.sh
 sudo apt install docker-compose -y
 
 # Create application directory
-sudo mkdir -p /opt/changelog
-cd /opt/changelog
+sudo mkdir -p /opt/changekeeper
+cd /opt/changekeeper
 ```
 
 2. **Clone and configure:**
@@ -186,31 +186,31 @@ nano .env
 **Production `.env` changes:**
 ```env
 SECRET_KEY=<generate-new-secure-key>
-REDIRECT_URI=https://changelog.yourdomain.com/auth/callback
+REDIRECT_URI=https://changekeeper.yourdomain.com/auth/callback
 # ... other settings
 ```
 
 3. **Update Entra ID Redirect URI:**
 
-Go to Azure Portal → App registrations → ChangeLog → Authentication
-- Add redirect URI: `https://changelog.yourdomain.com/auth/callback`
+Go to Azure Portal → App registrations → ChangeKeeper → Authentication
+- Add redirect URI: `https://changekeeper.yourdomain.com/auth/callback`
 
 4. **Configure reverse proxy (Nginx):**
 
 ```nginx
-# /etc/nginx/sites-available/changelog
+# /etc/nginx/sites-available/changekeeper
 server {
     listen 80;
-    server_name changelog.yourdomain.com;
+    server_name changekeeper.yourdomain.com;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name changelog.yourdomain.com;
+    server_name changekeeper.yourdomain.com;
 
-    ssl_certificate /etc/letsencrypt/live/changelog.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/changelog.yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/changekeeper.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/changekeeper.yourdomain.com/privkey.pem;
     
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -230,7 +230,7 @@ server {
 
 Enable site:
 ```bash
-sudo ln -s /etc/nginx/sites-available/changelog /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/changekeeper /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -249,28 +249,28 @@ docker-compose logs -f app
 
 ```bash
 # Create backup script
-sudo nano /opt/changelog/backup.sh
+sudo nano /opt/changekeeper/backup.sh
 ```
 
 ```bash
 #!/bin/bash
-BACKUP_DIR="/backup/changelog"
+BACKUP_DIR="/backup/changekeeper"
 DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR
 
 # Backup database
-docker-compose exec -T db pg_dump -U changelog_user changelog | gzip > $BACKUP_DIR/changelog_$DATE.sql.gz
+docker-compose exec -T db pg_dump -U changekeeper_user changekeeper | gzip > $BACKUP_DIR/changekeeper_$DATE.sql.gz
 
 # Keep last 30 days
-find $BACKUP_DIR -name "changelog_*.sql.gz" -mtime +30 -delete
+find $BACKUP_DIR -name "changekeeper_*.sql.gz" -mtime +30 -delete
 ```
 
 ```bash
-sudo chmod +x /opt/changelog/backup.sh
+sudo chmod +x /opt/changekeeper/backup.sh
 
 # Add to crontab (daily at 2 AM)
 sudo crontab -e
-# Add: 0 2 * * * /opt/changelog/backup.sh
+# Add: 0 2 * * * /opt/changekeeper/backup.sh
 ```
 
 ### Production Security Checklist
@@ -381,9 +381,9 @@ To enable email notifications:
 ENABLE_EMAIL=true
 SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
-SMTP_USER=changelog@yourdomain.com
+SMTP_USER=changekeeper@yourdomain.com
 SMTP_PASSWORD=<app-password>
-SMTP_FROM=changelog@yourdomain.com
+SMTP_FROM=changekeeper@yourdomain.com
 ```
 
 2. Restart application:
@@ -427,7 +427,7 @@ docker-compose ps
 docker-compose logs db
 
 # Verify connection
-docker-compose exec db psql -U changelog_user -d changelog
+docker-compose exec db psql -U changekeeper_user -d changekeeper
 ```
 
 **Reset database (⚠️ destroys data):**
